@@ -26,6 +26,13 @@
 3. Pulsar time
 4. ?
 
+---------
+
+## NEXT STEP
+
+- Docker
+- conda, PyPI
+
 
 
 
