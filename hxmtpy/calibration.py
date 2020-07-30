@@ -30,7 +30,6 @@ if __name__ == "__main__":
     hecal1 = HECalibration("in", "out")
     print(hecal1.evtfile)
     hecal1.instrument = "HE"
-    print(hecal1.instrument)
     hecal1.info()
 
 
