@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import numba
 
-__all__ = ['numba_bad_intervals_filter',
+__all__ = ['numba_glitch_filter',
         'numba_histogram',
         'lightcurve_hist',
         'lightcurve']
@@ -12,9 +12,12 @@ __all__ = ['numba_bad_intervals_filter',
 def numba_glitch_filter(arr_events, timedel, evtnum):
     glitch_gti_bool = np.array([True] * len(arr_events))
     for i in range(len(arr_events)-evtnum):
-        time_diff = arr_events[i+evtnum] - arr_events[i]
-        if time_diff <= timedel:
-            glitch_gti_bool[i:i+evtnum+1] = False
+#        time_diff = arr_events[i+evtnum] - arr_events[i]
+#        if time_diff <= timedel:
+#            glitch_gti_bool[i:i+evtnum] = False
+        time_diff = arr_events[i+1:i+evtnum] - arr_events[i:i+evtnum-1] 
+        if np.all(time_diff) <= timedel:
+            glitch_gti_bool[i:i+evtnum] = False
     return glitch_gti_bool
         
 @numba.jit(nopython=True)
