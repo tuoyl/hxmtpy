@@ -1,20 +1,61 @@
 from __future__ import division 
 import numpy as np
 import numba
+from astropy.io import fits
 
-__all__ = ['numba_glitch_filter',
+__all__ = ['FileUtils',
+        'numba_glitch_filter',
         'numba_histogram',
         'lightcurve_hist',
         'lightcurve']
 
+class FileUtils():
+
+    def __init__(self, infile):
+        self.infile = infile
+
+    def filter(self, filter_bool, outfile, extension_num=1):
+        '''
+        Filter the fits file by the bool array
+        '''
+        hdulist = fits.open(self.infile)
+        prim_hdr_old = hdulist[0].header
+        prim_hdr_new = fits.PrimaryHDU(header=prim_hdr_old)
+        # copy the rest of extensions
+        rest_of_ext = [hdulist[i] for i in range(len(hdulist)) if ((i !=0) and (i !=extension_num))]
+
+
+        # filter the specific extension table
+        new_table = []
+        table = hdulist[extension_num].data
+        column_names = table.names
+        column_type = table.formats
+        for column_name in column_names:
+            new_table.append( table.field(column_name)[filter_bool] )
+
+        ## construct the new table 
+        #TODO: main extension header!!
+        new_column = [fits.Column(name=column_names[i], array=new_table[i], format=column_type[i]) for i in
+                range(len(column_names))]
+        tb = fits.BinTableHDU.from_columns(new_column)
+
+        ## write to outfile
+        ### save 
+        hdul = fits.HDUList([prim_hdr_new, tb] + rest_of_ext)
+        hdul.writeto(outfile, overwrite=True)
+
+
+    def add_column(self, column_name, clobber=True):
+        '''
+        Add a column to FITS file
+        '''
+        hdulist = fits.open(self.infile)
+        print(column_name)
 
 @numba.njit
 def numba_glitch_filter(arr_events, timedel, evtnum):
     glitch_gti_bool = np.array([True] * len(arr_events))
     for i in range(len(arr_events)-evtnum):
-#        time_diff = arr_events[i+evtnum] - arr_events[i]
-#        if time_diff <= timedel:
-#            glitch_gti_bool[i:i+evtnum] = False
         time_diff = arr_events[i+1:i+evtnum] - arr_events[i:i+evtnum-1] 
         if np.all(time_diff) <= timedel:
             glitch_gti_bool[i:i+evtnum] = False

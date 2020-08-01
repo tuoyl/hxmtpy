@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division
 import numpy as np
 import numba
-from utils import numba_histogram, numba_glitch_filter
+from hxmtpy.utils import numba_histogram, numba_glitch_filter
+from hxmtpy.log import Log
 
 class Events():
 
@@ -11,6 +12,7 @@ class Events():
         else:
             self.events = arr_events
 
+    @Log.log_paras
     def glitch_gti_filter(self, **kwargs):
         arr_events = self.events
         glitch_gti_arr = np.array([True] * len(arr_events))
@@ -22,7 +24,6 @@ class Events():
             glitch_gti_arr = np.logical_and(glitch_gti_arr, 
                     numba_glitch_filter(arr_events, timedel, evtnum))
 
-            
 
         if ('lowchan' in kwargs) and ('highchan' in kwargs):
 
