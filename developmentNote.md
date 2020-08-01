@@ -12,10 +12,20 @@
 
 4. Log files
 
+   1. file IO log
+
+      1. protocal :
+
+         @log_funtion
+
+         function(*args, **kwargs)
+
 ## Classes
 
-1. Data files
-2. Auxiliry files
+1. Events array
+   1. glitch filter 
+2. GTI 
+   1. logical operation
 3. Light curves
 4. Spectra files
 

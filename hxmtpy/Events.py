@@ -2,7 +2,6 @@ from __future__ import absolute_import, division
 import numpy as np
 import numba
 from utils import numba_histogram, numba_glitch_filter
-import matplotlib.pyplot as plt
 
 class Events():
 
