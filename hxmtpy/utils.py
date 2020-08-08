@@ -10,14 +10,39 @@ __all__ = ['FileUtils',
         'lightcurve']
 
 class FileUtils():
+    """
+    The file utilities class for FITS file manipulation.
+
+    """
 
     def __init__(self, infile):
         self.infile = infile
 
     def filter(self, filter_bool, outfile, extension_num=1, **header_kwargs):
-        '''
+        """
         Filter the fits file by the bool array
-        '''
+
+        Parameters
+        --------------
+        filter_bool : bool-array 
+            The filter bool for filtering the data file. The length of 
+            bool array must be the same with the length of the data rows.
+
+        outfile : string
+            The name of output file. If the sa
+
+        extension_num : int (optional)
+            The extension number for modification (start with 0).
+
+        header_kwargs : 
+            add keywords to the header of FITS file.
+            'CREATOR = XXX' for example.
+
+        Returns
+        -------------
+            create the outfile if it is not exist.
+
+        """
         hdulist = fits.open(self.infile)
         prim_hdr_old = hdulist[0].header
         prim_hdr_new = fits.PrimaryHDU(header=prim_hdr_old)
