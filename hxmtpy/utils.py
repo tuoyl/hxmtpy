@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 import numba
 from astropy.io import fits
+from astropy.table import Table, Column
 
 __all__ = ['FileUtils',
         'numba_glitch_filter',
@@ -59,7 +60,6 @@ class FileUtils():
             new_table.append( table.field(column_name)[filter_bool] )
 
         ## construct the new table 
-        #TODO: main extension header!!
         new_column = [fits.Column(name=column_names[i], array=new_table[i], format=column_type[i]) for i in
                 range(len(column_names))]
         tb = fits.BinTableHDU.from_columns(new_column)
@@ -85,12 +85,53 @@ class FileUtils():
         hdulist_cp.writeto(outfile, overwrite=True)
 
 
-    def add_column(self, column_name, clobber=True):
+    def add_column(self, column_array, column_name, column_unit=None, column_format=None, outfile=None, extension_num=1, **header_kwargs):
         '''
         Add a column to FITS file
         '''
+
+        if outfile == None:
+            outfile = self.infile
+
         hdulist = fits.open(self.infile)
-        print(column_name)
+
+        for i, hdu in enumerate(hdulist):
+            if i == extension_num:
+                hdu_new = hdu
+                ## copy old tables and add new column
+                col_names = hdu.data.names
+                col_type = hdu.data.formats
+
+                if column_name in col_names:
+                    print("Warning: The column %s already exists, overwriting the column"%(column_name))
+                    hdu.data[column_name] = column_array
+
+                else: #column_name not exist, create new column
+                    new_columns = []
+                    table = hdu.data
+                    for j in range(len(col_names)):
+                        new_columns.append( fits.Column(name=col_names[j], 
+                                array=table.field(col_names[j]), 
+                                format=col_type[j]))
+                    new_column = fits.Column(name=column_name, array=column_array, format=column_format)
+                    new_columns.append(new_column)
+                    new_table = fits.BinTableHDU.from_columns(new_columns)
+                    hdu_new = fits.HDUList([new_table])[0]
+                    print(hdu_new.header)
+                    for keyword in hdu.header:
+                        if keyword not in hdu_new.header:
+                            hdu_new.header.set(keyword, hdu.header[keyword])
+
+                hdu_new.header["HISTORY"] = "TASK : add_column, add column %s to extention %s"%(column_name, str(extension_num))
+
+        ## replace new extension
+        hdulist_new = fits.HDUList([])
+        for i, hdu in enumerate(hdulist):
+            if i == extension_num:
+                hdulist_new.append(hdu_new)
+            else:
+                hdulist_new.append(hdu)
+        hdulist_new.writeto(outfile, overwrite=True)
 
 @numba.njit
 def numba_glitch_filter(arr_events, timedel, evtnum):
