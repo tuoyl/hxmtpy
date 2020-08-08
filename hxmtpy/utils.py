@@ -14,7 +14,7 @@ class FileUtils():
     def __init__(self, infile):
         self.infile = infile
 
-    def filter(self, filter_bool, outfile, extension_num=1):
+    def filter(self, filter_bool, outfile, extension_num=1, **header_kwargs):
         '''
         Filter the fits file by the bool array
         '''
@@ -43,6 +43,21 @@ class FileUtils():
         ### save 
         hdul = fits.HDUList([prim_hdr_new, tb] + rest_of_ext)
         hdul.writeto(outfile, overwrite=True)
+
+        ## copy the header of rest of extension
+        hdulist_cp = fits.open(outfile)
+        print(hdulist_cp[extension_num].header)
+        for header_key in hdulist[extension_num].header:
+            if header_key in hdulist_cp[extension_num].header:
+                continue
+            elif (header_key == "HISTORY") or (header_key == "COMMENT"):
+                continue
+            else:
+                hdulist_cp[extension_num].header[header_key] = hdulist[extension_num].header[header_key]
+        ## write header_kwargs
+        for header_key in header_kwargs:
+            hdulist_cp[extension_num].header[header_key] = header_kwargs[header_key]
+        hdulist_cp.writeto(outfile, overwrite=True)
 
 
     def add_column(self, column_name, clobber=True):
