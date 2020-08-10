@@ -85,10 +85,12 @@ class FileUtils():
         hdulist_cp.writeto(outfile, overwrite=True)
 
 
-    def add_column(self, column_array, column_name, column_unit=None, column_format=None, outfile=None, extension_num=1, **header_kwargs):
-        '''
+    def add_column(self, column_array, column_name, column_unit=None, column_format=None, 
+            outfile=None, extension_num=1, **header_kwargs):
+
+        """
         Add a column to FITS file
-        '''
+        """
 
         if outfile == None:
             outfile = self.infile
@@ -103,7 +105,7 @@ class FileUtils():
                 col_type = hdu.data.formats
 
                 if column_name in col_names:
-                    print("Warning: The column %s already exists, overwriting the column"%(column_name))
+                    WarningInfo.column_exist(column_name)
                     hdu.data[column_name] = column_array
 
                 else: #column_name not exist, create new column
@@ -117,21 +119,88 @@ class FileUtils():
                     new_columns.append(new_column)
                     new_table = fits.BinTableHDU.from_columns(new_columns)
                     hdu_new = fits.HDUList([new_table])[0]
-                    print(hdu_new.header)
                     for keyword in hdu.header:
                         if keyword not in hdu_new.header:
                             hdu_new.header.set(keyword, hdu.header[keyword])
 
-                hdu_new.header["HISTORY"] = "TASK : add_column, add column %s to extention %s"%(column_name, str(extension_num))
+                hdu_new.header["HISTORY"] = "TASK : add_column, add column %s to extention %s"%(column_name, 
+                        str(extension_num))
 
         ## replace new extension
-        hdulist_new = fits.HDUList([])
+        hdulist_new = hdulist
+        hdulist_new[extension_num] = hdu_new
+
+        hdulist_new.writeto(outfile, overwrite=True)
+
+    def merge_extension(self, merge_filename, outfile=None, extension_num=1, filetype="Events"):
+        """
+        merge extension of one FITS to the object, filetype coulbe "Events", "Lightcurve", "Spectrum" 
+        (capital insensitive)
+
+        """
+        
+        if outfile == None:
+            outfile = self.infile
+
+        hdulist = fits.open(self.infile)
+        hdulist_mergefile = fits.open(merge_filename)
+
         for i, hdu in enumerate(hdulist):
             if i == extension_num:
-                hdulist_new.append(hdu_new)
-            else:
-                hdulist_new.append(hdu)
+                hdu_new = hdu
+                ## copy table names and units
+                col_names = hdu.data.names
+                col_type = hdu.data.formats
+
+                col_names_mergefile = hdulist_mergefile[extension_num].data.names
+                col_type_mergefile  = hdulist_mergefile[extension_num].data.formats
+                if sorted([x.lower() for x in col_names]) != sorted([x.lower() for x in col_names_mergefile]):
+                    print(col_names, col_names_mergefile)
+                    WarningInfo.matching_warning()
+
+                # merge columns in extension
+                new_columns = []
+                table = hdu.data
+                for j in range(len(col_names)):
+                    if col_names[j].lower() not in [x.lower() for x in col_names_mergefile]:
+                        raise FormatError("Could not find column %s in %s"%(col_names[j], merge_filename))
+                    new_columns.append( fits.Column(name=col_names[j],
+                        array=np.append(table.field(col_names[j]), 
+                            hdulist_mergefile[extension_num].data.field(col_names[j])),
+                        format=col_type[j]))
+                new_table = fits.BinTableHDU.from_columns(new_columns)
+                hdu_new = fits.HDUList([new_table])[0]
+                for keyword in hdu.header:
+                    hdu_new.header.set(keyword, hdu.header[keyword])
+                    #TODO: properly modify the header info
+
+                hdu_new.header["HISTORY"] = "TASK : merge_extension, merge extension %s from file %s and %s"%(
+                        str(extension_num), self.infile, outfile)
+        
+        hdulist_new = hdulist
+        hdulist_new[extension_num] = hdu_new
         hdulist_new.writeto(outfile, overwrite=True)
+
+class WarningInfo():
+
+    def matching_warning():
+        warning_text = "Warning : The formats of the two files do not match, and the different parts are ignored."
+        print(warning_text)
+        return warning_text
+
+    def column_exist(column_name):
+        warning_text = "Warning : The column %s already exists, overwriting the column"%(column_name)
+        print(warning_text)
+        return warning_text
+
+class FormatError(Exception):
+    """
+    raise format error
+
+    """
+    def __init__(self, message):
+        self.message = message
+
 
 @numba.njit
 def numba_glitch_filter(arr_events, timedel, evtnum):
