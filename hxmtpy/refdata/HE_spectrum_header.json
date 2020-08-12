@@ -1,0 +1,34 @@
+{
+	"fixed_key" : 
+	{
+		"EXTNAME" : "SPECTRUM",
+		"DETCHANS" : 256,
+		"BACKFILE" : null,
+		"BACKSCAL" : 1,
+		"CORRFILE" : null,
+		"CORRSCAL" : 0,
+		"RESPFILE" : null,
+		"ANCRFILE" : null,
+		"FILETER"  : null,
+		"PHAVERSN" : "1992a",
+		"STATERR"  : true,
+		"SYSERR"   : false,
+		"POISSERR" : false,
+		"GROUPING" : 1,
+		"QUALITY"  : 1,
+		"AREASCAL" : 1,
+		"LIVETIME" : 1,
+		"DEADC"    : 0,
+		"DETID"    : 0,
+		"CHANTYPE" : "PI",
+		"TLMIN2"   : 0,
+		"TLMAX2"   : 255,
+		"TELESCOP" : "HXMT",
+		"INSTRUME" : "HE"
+	},
+
+	"unfixed_key" :
+	{
+		"EXPOSURE" : null
+	}
+}
