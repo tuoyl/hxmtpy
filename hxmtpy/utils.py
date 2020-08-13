@@ -203,12 +203,90 @@ class FormatError(Exception):
 
 
 @numba.njit
-def numba_glitch_filter(arr_events, timedel, evtnum):
+def numba_glitch_filter(arr_events, timedel, evtnum, detid):
     glitch_gti_bool = np.array([True] * len(arr_events))
-    for i in range(len(arr_events)-evtnum):
-        time_diff = arr_events[i+1:i+evtnum] - arr_events[i:i+evtnum-1] 
+#    for i in range(len(arr_events)-evtnum):
+    #for i in np.arange(len(arr_events)):
+
+    # glitch filter for PDUA 0
+    i = 0
+    while i < len(arr_events):
+        #slicing array for pdua0 events
+        pdua0_slicing_array = np.zeros(evtnum, dtype=np.float64)
+        pdua0_slicing_index = np.zeros(evtnum, dtype=np.intp)
+        j = i
+        k = 0
+        while pdua0_slicing_array[-1] == 0:
+            if j >= len(detid):
+                break
+            if detid[j] <= 5:
+                pdua0_slicing_index[k] = j
+                pdua0_slicing_array[k] = arr_events[j]
+                j += 1
+                k += 1
+            else:
+                j += 1
+
+        #calculate time del of slicing data
+        time_diff = pdua0_slicing_array[1:evtnum] - pdua0_slicing_array[:evtnum-1]
+        #record the index of glitch events
         if np.all(time_diff <= timedel):
-            glitch_gti_bool[i:i+evtnum] = False
+            for index in pdua0_slicing_index:
+                glitch_gti_bool[np.int(index)] = False
+        i = j
+
+    i = 0
+    while i < len(arr_events):
+        #slicing array for pdua0 events
+        pdua0_slicing_array = np.zeros(evtnum, dtype=np.float64)
+        pdua0_slicing_index = np.zeros(evtnum, dtype=np.intp)
+        j = i
+        k = 0
+        while pdua0_slicing_array[-1] == 0:
+            if j >= len(detid):
+                break
+            if (detid[j] > 5) & (detid[j] <= 11):
+                pdua0_slicing_index[k] = j
+                pdua0_slicing_array[k] = arr_events[j]
+                j += 1
+                k += 1
+            else:
+                j += 1
+
+        #calculate time del of slicing data
+        time_diff = pdua0_slicing_array[1:evtnum] - pdua0_slicing_array[:evtnum-1]
+        #record the index of glitch events
+        if np.all(time_diff <= timedel):
+            for index in pdua0_slicing_index:
+                glitch_gti_bool[np.int(index)] = False
+        i = j
+
+    i = 0
+    while i < len(arr_events):
+        #slicing array for pdua0 events
+        pdua0_slicing_array = np.zeros(evtnum, dtype=np.float64)
+        pdua0_slicing_index = np.zeros(evtnum, dtype=np.intp)
+        j = i
+        k = 0
+        while pdua0_slicing_array[-1] == 0:
+            if j >= len(detid):
+                break
+            if (detid[j] > 11):
+                pdua0_slicing_index[k] = j
+                pdua0_slicing_array[k] = arr_events[j]
+                j += 1
+                k += 1
+            else:
+                j += 1
+
+        #calculate time del of slicing data
+        time_diff = pdua0_slicing_array[1:evtnum] - pdua0_slicing_array[:evtnum-1]
+        #record the index of glitch events
+        if np.all(time_diff <= timedel):
+            for index in pdua0_slicing_index:
+                glitch_gti_bool[np.int(index)] = False
+        i = j
+
     return glitch_gti_bool
         
 @numba.jit(nopython=True)

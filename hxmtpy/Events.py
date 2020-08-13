@@ -18,11 +18,13 @@ class Events():
         glitch_gti_arr = np.array([True] * len(arr_events))
         if 'timedel' in kwargs:
             # filter glitch events by time intervals
+            print(kwargs)
             timedel = kwargs["timedel"]
             evtnum = kwargs["evtnum"]
+            detid  = self.detid
 
             glitch_gti_arr = np.logical_and(glitch_gti_arr, 
-                    numba_glitch_filter(arr_events, timedel, evtnum))
+                    numba_glitch_filter(arr_events, timedel, evtnum, detid))
 
 
         if ('lowchan' in kwargs) and ('highchan' in kwargs):
