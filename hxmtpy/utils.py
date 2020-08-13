@@ -71,7 +71,7 @@ class FileUtils():
 
         ## copy the header of rest of extension
         hdulist_cp = fits.open(outfile)
-        print(hdulist_cp[extension_num].header)
+        #print(hdulist_cp[extension_num].header)
         for header_key in hdulist[extension_num].header:
             if header_key in hdulist_cp[extension_num].header:
                 continue
@@ -207,7 +207,7 @@ def numba_glitch_filter(arr_events, timedel, evtnum):
     glitch_gti_bool = np.array([True] * len(arr_events))
     for i in range(len(arr_events)-evtnum):
         time_diff = arr_events[i+1:i+evtnum] - arr_events[i:i+evtnum-1] 
-        if np.all(time_diff) <= timedel:
+        if np.all(time_diff <= timedel):
             glitch_gti_bool[i:i+evtnum] = False
     return glitch_gti_bool
         
